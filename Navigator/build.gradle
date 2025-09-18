@@ -29,6 +29,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
 }
 
+// Tasks for sources and javadoc
 task androidSourcesJar(type: Jar) {
     archiveClassifier.set("sources")
     from android.sourceSets.main.java.srcDirs
@@ -38,6 +39,7 @@ task androidJavadocsJar(type: Jar) {
     archiveClassifier.set("javadoc")
 }
 
+// Publishing configuration
 afterEvaluate {
     publishing {
         publications {
@@ -88,9 +90,14 @@ afterEvaluate {
         }
     }
 
-    // Sign AAR
+    // Signing configuration
     signing {
-        useGpgCmd() // Use your GPG key from gradle.properties
+        useGpgCmd() // use GPG key from gradle.properties
         sign publishing.publications.release
+    }
+
+    // Fix task order issue: sign after AAR is built
+    tasks.named("signReleasePublication") {
+        dependsOn tasks.named("bundleReleaseAar")
     }
 }
