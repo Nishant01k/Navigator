@@ -1,13 +1,20 @@
-apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
+plugins {
+    id 'com.android.library'
+    id 'maven-publish'
+    id 'signing'
+}
 
 android {
-    namespace 'com.example.navigator'
-    compileSdk 33
+    namespace 'com.nishant01k.navigator'
+    compileSdk 34
 
     defaultConfig {
         minSdk 21
-        targetSdk 33
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        consumerProguardFiles "consumer-rules.pro"
     }
 
     buildTypes {
@@ -18,15 +25,72 @@ android {
     }
 }
 
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set("sources")
+    from android.sourceSets.main.java.srcDirs
+}
+
+task androidJavadocsJar(type: Jar) {
+    archiveClassifier.set("javadoc")
+}
+
 afterEvaluate {
     publishing {
         publications {
             release(MavenPublication) {
-                artifact("$buildDir/outputs/aar/${project.name}-release.aar")
-                groupId = 'com.yourcompany.navigator'
-                artifactId = 'navigator'
-                version = '1.0.0'
+                groupId = "io.github.nishant01k"
+                artifactId = "navigator"
+                version = "1.0.0"
+
+                artifact("$buildDir/outputs/aar/${project.getName()}-release.aar")
+                artifact androidSourcesJar
+                artifact androidJavadocsJar
+
+                pom {
+                    name.set("Navigator")
+                    description.set("A simple Android library for navigation between screens.")
+                    url.set("https://github.com/Nishant01k/Navigator")
+                    licenses {
+                        license {
+                            name.set("The Apache License, Version 2.0")
+                            url.set("http://www.apache.org/licenses/LICENSE-2.0.txt")
+                        }
+                    }
+                    developers {
+                        developer {
+                            id.set("nishant01k")
+                            name.set("Santosh Kumar Chaudhary")
+                            email.set("chaudharysantosh03k@gmail.com")
+                        }
+                    }
+                    scm {
+                        connection.set("scm:git:git://github.com/Nishant01k/Navigator.git")
+                        developerConnection.set("scm:git:ssh://github.com/Nishant01k/Navigator.git")
+                        url.set("https://github.com/Nishant01k/Navigator")
+                    }
+                }
             }
         }
+
+        repositories {
+            maven {
+                name = "OSSRH"
+                url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+                credentials {
+                    username = project.findProperty("ossrhUsername") ?: ""
+                    password = project.findProperty("ossrhPassword") ?: ""
+                }
+            }
+        }
+    }
+
+    // Sign AAR
+    signing {
+        useGpgCmd() // Use your GPG key from gradle.properties
+        sign publishing.publications.release
     }
 }
